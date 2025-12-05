@@ -46,7 +46,7 @@ describe("AEAT VAT split — fallback redistribution", () => {
     const total = Number(
       result.reduce((s, r) => s + r.net + r.vat, 0).toFixed(2)
     );
-
+    console.log(result);
     expect(total).toBe(0.2);
   });
 });

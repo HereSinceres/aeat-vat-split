@@ -60,7 +60,17 @@ function fixDifference(rows: any[]) {
 
   return candidates;
 }
-
+/**
+ * AEAT-compliant multi-rate VAT splitter.
+ *
+ * @param lines - Array of {gross, vatPercent}.
+ * @returns Array of {net, vat, gross, vatPercent}.
+ *
+ * Guarantees:
+ *  - VAT = round(net × VAT%)
+ *  - sum(net + vat) == sum(gross)
+ *  - Always solvable (fallbacks included)
+ */
 export function aeatSplit(lines: LineInput[]): LineOutput[] {
   // Step 1: Normal AEAT split
   const s1 = basicSplit(lines);

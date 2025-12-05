@@ -4,8 +4,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "jest --runInBand"
+    "build": "rollup -c",
+    "test": "jest --coverage"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
