@@ -1,7 +1,6 @@
-
 export interface LineInput {
-  gross: number;       
-  vatPercent: number;  
+  gross: number;
+  vatPercent: number;
 }
 
 export interface LineOutput {
@@ -17,7 +16,7 @@ import { mergeSameVat } from "./helpers/merge";
 import { fallbackToZeroVat } from "./helpers/fallbackZero";
 
 function basicSplit(lines: LineInput[]) {
-  return lines.map(l => {
+  return lines.map((l) => {
     const gross = l.gross;
     const rate = l.vatPercent;
 
@@ -65,22 +64,44 @@ function fixDifference(rows: any[]) {
   return candidates;
 }
 
+function aggregateByVatPercent(lines: LineOutput[]): LineOutput[] {
+  const map = new Map();
+
+  for (const l of lines) {
+    if (!map.has(l.vatPercent)) {
+      map.set(l.vatPercent, {
+        vatPercent: l.vatPercent,
+        gross: 0,
+        net: 0,
+        vat: 0,
+        sum: 0,
+      });
+    }
+    const m = map.get(l.vatPercent);
+    m.gross += l.gross;
+    m.net += l.net;
+    m.vat += l.vat;
+  }
+
+  return [...map.values()];
+}
+
 export function aeatSplit(lines: LineInput[]): LineOutput[] {
   const s1 = basicSplit(lines);
   const r1 = fixDifference(s1);
-  if (r1) return r1;
+  if (r1) return aggregateByVatPercent(r1);
 
   const redistributed = redistributeGross(lines);
   const s2 = basicSplit(redistributed);
   const r2 = fixDifference(s2);
-  if (r2) return r2;
+  if (r2) return aggregateByVatPercent(r2);
 
   const merged = mergeSameVat(lines);
   const s3 = basicSplit(merged);
   const r3 = fixDifference(s3);
-  if (r3) return r3;
+  if (r3) return aggregateByVatPercent(r3);
 
   const zero = fallbackToZeroVat(lines);
   const s4 = basicSplit(zero);
-  return s4;
+  return aggregateByVatPercent(s4);
 }
