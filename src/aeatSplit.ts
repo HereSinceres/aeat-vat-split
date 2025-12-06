@@ -4,31 +4,47 @@ import { mergeSameVat } from "./helpers/merge";
 import { fallbackToZeroVat } from "./helpers/fallbackZero";
 
 export interface LineInput {
-  gross: number;
-  vatPercent: number;
+  gross: number;        // 整数（单位：分）
+  vatPercent: number;   // 0-100
 }
 
 export interface LineOutput {
-  net: number;
+  net: number;          
   vat: number;
   gross: number;
   vatPercent: number;
 }
 
+/**
+ * 基础计算：全部整数运算
+ */
 function basicSplit(lines: LineInput[]) {
-  return lines.map((l) => {
-    const tnet = l.gross / (1 + l.vatPercent);
-    const net = Number(tnet.toFixed(2));
-    const vat = Math.round(net * l.vatPercent);
-    return { ...l, net, vat, sum: net + vat };
+  return lines.map(l => {
+    const gross = l.gross;
+    const rate = l.vatPercent;
+
+    // 理论净额（向下取整）
+    const tnet = Math.floor((gross * 100) / (100 + rate));
+
+    // 整数 VAT
+    const vat = Math.round((tnet * rate) / 100);
+
+    return {
+      ...l,
+      net: tnet,
+      vat,
+      sum: tnet + vat,
+    };
   });
 }
 
+/**
+ * 补差逻辑（整数版）
+ */
 function fixDifference(rows: any[]) {
-  const total = rows.reduce((s, r) => s + r.gross, 0);
-
-  let sum = rows.reduce((s, r) => s + r.sum, 0);
-  let diff = Number((total - sum).toFixed(2));
+  const totalGross = rows.reduce((s, r) => s + r.gross, 0);
+  let totalSum = rows.reduce((s, r) => s + r.sum, 0);
+  let diff = totalGross - totalSum; // 整数差额（单位：分）
 
   if (diff === 0) return rows;
 
@@ -38,15 +54,18 @@ function fixDifference(rows: any[]) {
     return b.gross - a.gross;
   });
 
-  while (Math.abs(diff) >= 0.01) {
+  // diff 可以是 ±1、±2、±3 ...
+  const delta = diff > 0 ? 1 : -1;
+
+  while (diff !== 0) {
     let patched = false;
 
-    for (let r of candidates) {
-      const delta = diff > 0 ? 0.01 : -0.01;
-      if (canAdjustPenny(r.net, r.vatPercent, delta)) {
-        r.net = Number((r.net + delta).toFixed(2));
-        r.vat = Math.round(r.net * r.vatPercent);
-        r.sum = r.net + r.vat;
+    for (const row of candidates) {
+      if (canAdjustPenny(row.net, row.vatPercent, delta)) {
+        row.net += delta;
+        row.vat = Math.round((row.net * row.vatPercent) / 100);
+        row.sum = row.net + row.vat;
+
         patched = true;
         break;
       }
@@ -54,42 +73,31 @@ function fixDifference(rows: any[]) {
 
     if (!patched) return null;
 
-    sum = candidates.reduce((s, r) => s + r.sum, 0);
-    diff = Number((total - sum).toFixed(2));
+    totalSum = candidates.reduce((s, r) => s + r.sum, 0);
+    diff = totalGross - totalSum;
   }
 
   return candidates;
 }
+
 /**
- * AEAT-compliant multi-rate VAT splitter.
- *
- * @param lines - Array of {gross, vatPercent}.
- * @returns Array of {net, vat, gross, vatPercent}.
- *
- * Guarantees:
- *  - VAT = round(net × VAT%)
- *  - sum(net + vat) == sum(gross)
- *  - Always solvable (fallbacks included)
+ * 主入口：整数版
  */
 export function aeatSplit(lines: LineInput[]): LineOutput[] {
-  // Step 1: Normal AEAT split
   const s1 = basicSplit(lines);
-  const fixed1 = fixDifference(s1);
-  if (fixed1) return fixed1;
+  const r1 = fixDifference(s1);
+  if (r1) return r1;
 
-  // Step 2: Fallback 1 — 行级 gross 重新分配
   const redistributed = redistributeGross(lines);
   const s2 = basicSplit(redistributed);
-  const fixed2 = fixDifference(s2);
-  if (fixed2) return fixed2;
+  const r2 = fixDifference(s2);
+  if (r2) return r2;
 
-  // Step 3: Fallback 2 — 合并同税率行
   const merged = mergeSameVat(lines);
   const s3 = basicSplit(merged);
-  const fixed3 = fixDifference(s3);
-  if (fixed3) return fixed3;
+  const r3 = fixDifference(s3);
+  if (r3) return r3;
 
-  // Step 4: Fallback 3 — 归 0% 税率（最终兜底）
   const zero = fallbackToZeroVat(lines);
   const s4 = basicSplit(zero);
   return s4;
