@@ -1,3 +1,4 @@
+
 export function canAdjustPenny(net: number, vatPercent: number, delta: number) {
   const newNet = net + delta;
   if (newNet < 0) return false;

@@ -1,3 +1,4 @@
+
 import { LineInput } from "../aeatSplit";
 
 export function fallbackToZeroVat(lines: LineInput[]): LineInput[] {
