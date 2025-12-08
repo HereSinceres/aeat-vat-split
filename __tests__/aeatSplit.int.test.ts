@@ -59,6 +59,24 @@ describe("aeatSplit (integer version)", () => {
     expect(result[0].vat_percent).toBe(0);
     expect(result[0].net + result[0].vat).toBe(inputTotal);
   });
+  test("10,10,10,4", () => {
+    const lines = [
+      { gross: 1, vat_percent: 10 },
+      { gross: 1, vat_percent: 4 },
+    ];
+
+    const result = aeatSplit(lines);
+
+    expect(result.length).toBe(2);
+    expect(result[0].net).toBe(2);
+    expect(result[0].vat).toBe(0);
+    expect(result[1].net).toBe(0);
+    expect(result[1].vat).toBe(0);
+
+    const inputTotal = lines.reduce((s, l) => s + l.gross, 0);
+    const outputTotal = result.reduce((s, r) => s + r.net + r.vat, 0);
+    expect(outputTotal).toBe(inputTotal);
+  });
 
   test("random property test: always conserves total & VAT formula", () => {
     const rnd = (min: number, max: number) =>

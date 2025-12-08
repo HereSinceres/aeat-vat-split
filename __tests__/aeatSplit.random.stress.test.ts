@@ -75,7 +75,6 @@ describe("Randomized Stress Test (integer AEAT VAT split)", () => {
       const inputTotal = lines.reduce((s, l) => s + l.gross, 0);
 
       const result = aggregateByvat_percent(aeatSplit(lines));
-      console.table(result);
       // 输出总额必须等于输入总额（守恒）
       const outputTotal = result.reduce((s, r) => s + r.net + r.vat, 0);
       expect(outputTotal).toBe(inputTotal);
