@@ -9,7 +9,7 @@ const rnd = (min: number, max: number) =>
 // 生成随机行
 function randomLines(): { gross: number; vatPercent: number }[] {
   const count = rnd(1, 6); // 1～6行，模拟真实 POS/Kitchen 分摊情况
-  const lines = [];
+  const lines: { gross: number; vatPercent: number }[] = [];
 
   for (let i = 0; i < count; i++) {
     lines.push({
@@ -18,7 +18,52 @@ function randomLines(): { gross: number; vatPercent: number }[] {
     });
   }
 
-  return lines;
+  const map = new Map();
+
+  for (const l of lines) {
+    if (!map.has(l.vatPercent)) {
+      map.set(l.vatPercent, {
+        vatPercent: l.vatPercent,
+        gross: 0,
+        net: 0,
+        vat: 0,
+        sum: 0,
+      });
+    }
+    const m = map.get(l.vatPercent);
+    m.gross += l.gross;
+  }
+
+  return [...map.values()];
+}
+
+function aggregateByVatPercent(
+  lines: {
+    net: number;
+    vat: number;
+    gross: number;
+    vatPercent: number;
+  }[]
+) {
+  const map = new Map();
+
+  for (const l of lines) {
+    if (!map.has(l.vatPercent)) {
+      map.set(l.vatPercent, {
+        vatPercent: l.vatPercent,
+        gross: 0,
+        net: 0,
+        vat: 0,
+        sum: 0,
+      });
+    }
+    const m = map.get(l.vatPercent);
+    m.gross += l.gross;
+    m.net += l.net;
+    m.vat += l.vat;
+  }
+
+  return [...map.values()];
 }
 
 describe("Randomized Stress Test (integer AEAT VAT split)", () => {
@@ -28,9 +73,9 @@ describe("Randomized Stress Test (integer AEAT VAT split)", () => {
     for (let i = 0; i < ROUNDS; i++) {
       const lines = randomLines();
       const inputTotal = lines.reduce((s, l) => s + l.gross, 0);
-      console.table(lines);
-      const result = aeatSplit(lines);
 
+      const result = aggregateByVatPercent(aeatSplit(lines));
+      console.table(result);
       // 输出总额必须等于输入总额（守恒）
       const outputTotal = result.reduce((s, r) => s + r.net + r.vat, 0);
       expect(outputTotal).toBe(inputTotal);
