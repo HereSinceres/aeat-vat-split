@@ -4,8 +4,8 @@ import type { LineInput } from "../src/aeatSplit";
 describe("redistributeGross (integer version)", () => {
   test("keeps total sum when ratios are simple", () => {
     const lines: LineInput[] = [
-      { gross: 500, vatPercent: 21 },
-      { gross: 500, vatPercent: 10 },
+      { gross: 500, vat_percent: 21 },
+      { gross: 500, vat_percent: 10 },
     ];
 
     const redistributed = redistributeGross(lines);
@@ -18,9 +18,9 @@ describe("redistributeGross (integer version)", () => {
 
   test("handles diff != 0 branch and fixes it", () => {
     const lines: LineInput[] = [
-      { gross: 1, vatPercent: 21 },
-      { gross: 2, vatPercent: 10 },
-      { gross: 3, vatPercent: 4 },
+      { gross: 1, vat_percent: 21 },
+      { gross: 2, vat_percent: 10 },
+      { gross: 3, vat_percent: 4 },
     ];
 
     const redistributed = redistributeGross(lines);

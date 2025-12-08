@@ -1,13 +1,13 @@
 export interface LineInput {
   gross: number;
-  vatPercent: number;
+  vat_percent: number;
 }
 
 export interface LineOutput {
   net: number;
   vat: number;
   gross: number;
-  vatPercent: number;
+  vat_percent: number;
 }
 
 import { canAdjustPenny } from "./helpers/adjust";
@@ -18,7 +18,7 @@ import { fallbackToZeroVat } from "./helpers/fallbackZero";
 function basicSplit(lines: LineInput[]) {
   return lines.map((l) => {
     const gross = l.gross;
-    const rate = l.vatPercent;
+    const rate = l.vat_percent;
 
     const tnet = Math.floor((gross * 100) / (100 + rate));
     const vat = Math.round((tnet * rate) / 100);
@@ -35,7 +35,7 @@ function fixDifference(rows: any[]) {
   if (diff === 0) return rows;
 
   const candidates = [...rows].sort((a, b) => {
-    if (a.vatPercent !== b.vatPercent) return b.vatPercent - a.vatPercent;
+    if (a.vat_percent !== b.vat_percent) return b.vat_percent - a.vat_percent;
     if (a.vat !== b.vat) return b.vat - a.vat;
     return b.gross - a.gross;
   });
@@ -46,9 +46,9 @@ function fixDifference(rows: any[]) {
     let patched = false;
 
     for (const row of candidates) {
-      if (canAdjustPenny(row.net, row.vatPercent, delta)) {
+      if (canAdjustPenny(row.net, row.vat_percent, delta)) {
         row.net += delta;
-        row.vat = Math.round((row.net * row.vatPercent) / 100);
+        row.vat = Math.round((row.net * row.vat_percent) / 100);
         row.sum = row.net + row.vat;
         patched = true;
         break;

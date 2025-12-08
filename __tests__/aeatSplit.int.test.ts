@@ -3,9 +3,9 @@ import { aeatSplit } from "../src/aeatSplit";
 describe("aeatSplit (integer version)", () => {
   test("simple multi-rate split in cents", () => {
     const lines = [
-      { gross: 10000, vatPercent: 21 }, // 100.00
-      { gross: 5000, vatPercent: 10 }, // 50.00
-      { gross: 2000, vatPercent: 0 }, // 20.00
+      { gross: 10000, vat_percent: 21 }, // 100.00
+      { gross: 5000, vat_percent: 10 }, // 50.00
+      { gross: 2000, vat_percent: 0 }, // 20.00
     ];
 
     const result = aeatSplit(lines);
@@ -17,14 +17,14 @@ describe("aeatSplit (integer version)", () => {
 
     // 每行 VAT = round(net * rate / 100)
     result.forEach((r) => {
-      expect(r.vat).toBe(Math.round((r.net * r.vatPercent) / 100));
+      expect(r.vat).toBe(Math.round((r.net * r.vat_percent) / 100));
     });
   });
 
   test("diff === 0 path: all 0% VAT", () => {
     const lines = [
-      { gross: 1000, vatPercent: 0 },
-      { gross: 2300, vatPercent: 0 },
+      { gross: 1000, vat_percent: 0 },
+      { gross: 2300, vat_percent: 0 },
     ];
 
     const result = aeatSplit(lines);
@@ -43,9 +43,9 @@ describe("aeatSplit (integer version)", () => {
   test("extreme tricky tiny amounts: fallbackToZeroVat path", () => {
     // 这个组合在整数版算法里会走完整 fallback，并最终 collapse 到 0% VAT
     const lines = [
-      { gross: 2, vatPercent: 21 },
-      { gross: 3, vatPercent: 21 },
-      { gross: 9, vatPercent: 21 },
+      { gross: 2, vat_percent: 21 },
+      { gross: 3, vat_percent: 21 },
+      { gross: 9, vat_percent: 21 },
     ];
 
     const result = aeatSplit(lines);
@@ -56,7 +56,7 @@ describe("aeatSplit (integer version)", () => {
 
     // 最终会变成 1 行 0% VAT（fallbackToZeroVat）
     expect(result.length).toBe(1);
-    expect(result[0].vatPercent).toBe(0);
+    expect(result[0].vat_percent).toBe(0);
     expect(result[0].net + result[0].vat).toBe(inputTotal);
   });
 
@@ -69,7 +69,7 @@ describe("aeatSplit (integer version)", () => {
     for (let i = 0; i < 200; i++) {
       const lines = Array.from({ length: 3 }, () => ({
         gross: rnd(1, 10000), // 0.01 ~ 100.00
-        vatPercent: vatOptions[rnd(0, vatOptions.length - 1)],
+        vat_percent: vatOptions[rnd(0, vatOptions.length - 1)],
       }));
 
       const result = aeatSplit(lines);
@@ -81,7 +81,7 @@ describe("aeatSplit (integer version)", () => {
 
       result.forEach((r) => {
         expect(r.net).toBeGreaterThanOrEqual(0);
-        expect(r.vat).toBe(Math.round((r.net * r.vatPercent) / 100));
+        expect(r.vat).toBe(Math.round((r.net * r.vat_percent) / 100));
       });
     }
   });

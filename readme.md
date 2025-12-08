@@ -27,15 +27,15 @@ npm install aeat-vat-split
 import { aeatSplit } from "aeat-vat-split";
 
 const result = aeatSplit([
-{ gross: 60, vatPercent: 0.21 },
-{ gross: 40, vatPercent: 0.10 },
+{ gross: 60, vat_percent: 0.21 },
+{ gross: 40, vat_percent: 0.10 },
 ]);
 
 console.log(result);
 /_
 [
-{ net: 49.59, vat: 10.41, gross: 60, vatPercent: 0.21 },
-{ net: 36.36, vat: 3.64, gross: 40, vatPercent: 0.10 }
+{ net: 49.59, vat: 10.41, gross: 60, vat_percent: 0.21 },
+{ net: 36.36, vat: 3.64, gross: 40, vat_percent: 0.10 }
 ]
 _/
 
@@ -46,7 +46,7 @@ npm test
 aeatSplit(lines: LineInput[]): LineOutput[]
 field description
 gross Input line total (with VAT)
-vatPercent 0.21, 0.10, 0.04, 0.00
+vat_percent 0.21, 0.10, 0.04, 0.00
 net Net amount (2 decimals)
 vat VAT (int, AEAT-compliant)
 🛠 Internals

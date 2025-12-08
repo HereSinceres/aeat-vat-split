@@ -7,57 +7,57 @@ const rnd = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
 // 生成随机行
-function randomLines(): { gross: number; vatPercent: number }[] {
+function randomLines(): { gross: number; vat_percent: number }[] {
   const count = rnd(1, 6); // 1～6行，模拟真实 POS/Kitchen 分摊情况
-  const lines: { gross: number; vatPercent: number }[] = [];
+  const lines: { gross: number; vat_percent: number }[] = [];
 
   for (let i = 0; i < count; i++) {
     lines.push({
       gross: rnd(1, 100000), // 0.01～1000欧元
-      vatPercent: VAT_OPTIONS[rnd(0, VAT_OPTIONS.length - 1)],
+      vat_percent: VAT_OPTIONS[rnd(0, VAT_OPTIONS.length - 1)],
     });
   }
 
   const map = new Map();
 
   for (const l of lines) {
-    if (!map.has(l.vatPercent)) {
-      map.set(l.vatPercent, {
-        vatPercent: l.vatPercent,
+    if (!map.has(l.vat_percent)) {
+      map.set(l.vat_percent, {
+        vat_percent: l.vat_percent,
         gross: 0,
         net: 0,
         vat: 0,
         sum: 0,
       });
     }
-    const m = map.get(l.vatPercent);
+    const m = map.get(l.vat_percent);
     m.gross += l.gross;
   }
 
   return [...map.values()];
 }
 
-function aggregateByVatPercent(
+function aggregateByvat_percent(
   lines: {
     net: number;
     vat: number;
     gross: number;
-    vatPercent: number;
+    vat_percent: number;
   }[]
 ) {
   const map = new Map();
 
   for (const l of lines) {
-    if (!map.has(l.vatPercent)) {
-      map.set(l.vatPercent, {
-        vatPercent: l.vatPercent,
+    if (!map.has(l.vat_percent)) {
+      map.set(l.vat_percent, {
+        vat_percent: l.vat_percent,
         gross: 0,
         net: 0,
         vat: 0,
         sum: 0,
       });
     }
-    const m = map.get(l.vatPercent);
+    const m = map.get(l.vat_percent);
     m.gross += l.gross;
     m.net += l.net;
     m.vat += l.vat;
@@ -74,7 +74,7 @@ describe("Randomized Stress Test (integer AEAT VAT split)", () => {
       const lines = randomLines();
       const inputTotal = lines.reduce((s, l) => s + l.gross, 0);
 
-      const result = aggregateByVatPercent(aeatSplit(lines));
+      const result = aggregateByvat_percent(aeatSplit(lines));
       console.table(result);
       // 输出总额必须等于输入总额（守恒）
       const outputTotal = result.reduce((s, r) => s + r.net + r.vat, 0);
@@ -90,13 +90,13 @@ describe("Randomized Stress Test (integer AEAT VAT split)", () => {
 
       // VAT 必须始终符合公式
       result.forEach((r) => {
-        const recomputedVat = Math.round((r.net * r.vatPercent) / 100);
+        const recomputedVat = Math.round((r.net * r.vat_percent) / 100);
         expect(r.vat).toBe(recomputedVat);
       });
 
       // fallback 之后 VAT 百分比必须合法
       result.forEach((r) => {
-        expect(VAT_OPTIONS.includes(r.vatPercent) || r.vatPercent === 0).toBe(
+        expect(VAT_OPTIONS.includes(r.vat_percent) || r.vat_percent === 0).toBe(
           true
         );
       });

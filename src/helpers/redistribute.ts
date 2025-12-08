@@ -7,7 +7,7 @@ export function redistributeGross(lines: LineInput[]): LineInput[] {
   const redistributed = lines.map(l => {
     const ratio = l.gross / total;
     const gross = Math.floor(total * ratio);
-    return { gross, vatPercent: l.vatPercent };
+    return { gross, vat_percent: l.vat_percent };
   });
 
   let sum = redistributed.reduce((s, l) => s + l.gross, 0);
