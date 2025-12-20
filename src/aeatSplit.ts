@@ -11,9 +11,6 @@ export interface LineOutput {
 }
 
 import { canAdjustPenny } from "./helpers/adjust";
-import { redistributeGross } from "./helpers/redistribute";
-import { mergeSameVat } from "./helpers/merge";
-import { fallbackToZeroVat } from "./helpers/fallbackZero";
 
 function basicSplit(lines: LineInput[]) {
   return lines.map((l) => {
@@ -63,23 +60,53 @@ function fixDifference(rows: any[]) {
 
   return candidates;
 }
+function fixDifferenceWithZeroVat(
+  rows: LineOutput[],
+  totalGross: number
+): LineOutput[] {
+  let originalTotal = rows.reduce((s, r) => s + r.net + r.vat, 0);
+  let diff = totalGross - originalTotal;
+  if (diff) {
+    let hasZeroVat = rows.some((r) => r.vat_percent === 0);
+    if (hasZeroVat) {
+      rows = rows.map((i) => {
+        if (i.vat_percent === 0) {
+          return {
+            ...i,
+            net: i.net + diff,
+            gross: i.gross + diff,
+          };
+        }
+        return i;
+      });
+    } else {
+      rows.push({
+        vat_percent: 0,
+        net: diff,
+        gross: diff,
+        vat: 0,
+      });
+    }
+  }
+  return rows.map((i) => ({
+    ...i,
+    sum: i.net + i.vat,
+  }));
+}
 
 export function aeatSplit(lines: LineInput[]): LineOutput[] {
   const s1 = basicSplit(lines);
   const r1 = fixDifference(s1);
-  if (r1) return r1;
 
-  const redistributed = redistributeGross(lines);
-  const s2 = basicSplit(redistributed);
-  const r2 = fixDifference(s2);
-  if (r2) return r2;
+  if (r1) {
+    return r1;
+  }
 
-  const merged = mergeSameVat(lines);
-  const s3 = basicSplit(merged);
-  const r3 = fixDifference(s3);
-  if (r3) return r3;
+  const s4 = basicSplit(lines);
+  const r3 = fixDifferenceWithZeroVat(
+    s4,
+    lines.reduce((s, l) => s + l.gross, 0)
+  );
 
-  const zero = fallbackToZeroVat(lines);
-  const s4 = basicSplit(zero);
-  return s4;
+  return r3;
 }

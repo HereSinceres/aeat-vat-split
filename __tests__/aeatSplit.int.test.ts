@@ -41,11 +41,9 @@ describe("aeatSplit (integer version)", () => {
   });
 
   test("extreme tricky tiny amounts: fallbackToZeroVat path", () => {
-    // 这个组合在整数版算法里会走完整 fallback，并最终 collapse 到 0% VAT
     const lines = [
       { gross: 2, vat_percent: 21 },
-      { gross: 3, vat_percent: 21 },
-      { gross: 9, vat_percent: 21 },
+      { gross: 2, vat_percent: 24 },
     ];
 
     const result = aeatSplit(lines);
@@ -53,11 +51,6 @@ describe("aeatSplit (integer version)", () => {
     const inputTotal = lines.reduce((s, l) => s + l.gross, 0);
     const outputTotal = result.reduce((s, r) => s + r.net + r.vat, 0);
     expect(outputTotal).toBe(inputTotal);
-
-    // 最终会变成 1 行 0% VAT（fallbackToZeroVat）
-    expect(result.length).toBe(1);
-    expect(result[0].vat_percent).toBe(0);
-    expect(result[0].net + result[0].vat).toBe(inputTotal);
   });
   test("10,10,10,4", () => {
     const lines = [
